@@ -198,26 +198,6 @@ CompleteSearchEngine
     └── Detects score drops → Excellent/Good/Fair
 ```
 
-## Technology Stack
-
-### Frontend
-- **React 19** - UI Framework
-- **Vite** - Build Tool
-- **WebSocket API** - Real-time Communication
-- **CSS** - Custom styling with gradient theme
-
-### Backend
-- **FastAPI** - Web Framework
-- **Uvicorn** - ASGI Server
-- **WebSockets** - Real-time Communication
-- **Python 3.13** - Runtime
-
-### AI/ML Services
-- **OpenAI API**
-  - `text-embedding-3-small` - Embeddings
-  - `gpt-4o-mini` - Query parsing
-- **Pinecone** - Vector Database
-- **sentence-transformers** - Cross-encoder model
 
 ## Search Pipeline Details
 
@@ -261,81 +241,7 @@ CompleteSearchEngine
 - **Process**: Formats for frontend display
 - **Output**: 24 results with match categories
 
-## Data Structures
 
-### Search Request
-```json
-{
-  "type": "search",
-  "query": "small apartment dog",
-  "top_k": 24,
-  "rerank_top_n": 72
-}
-```
-
-### Search Response
-```json
-{
-  "type": "results",
-  "data": {
-    "results": [
-      {
-        "name": "Breed Name",
-        "match_category": {
-          "category": "excellent",
-          "label": "Excellent Match",
-          "color": "#4ADE80",
-          "description": "Highly relevant to your search",
-          "icon": "⭐"
-        },
-        "score": 0.856,
-        "cross_encoder_score": 0.856,
-        "bi_encoder_score": 0.742,
-        "size": "small",
-        "weight": "10-15 lbs",
-        "height": "10-12 in",
-        "lifespan": "12-15 years",
-        "breed_group": "Toy",
-        "bred_for": "Companionship",
-        "temperament": "Friendly, Playful, Gentle",
-        "image_url": "https://...",
-        "metadata": {...}
-      }
-    ],
-    "metadata": {
-      "query": "small apartment dog",
-      "total_duration": 2.345,
-      "stages": {...}
-    }
-  }
-}
-```
-
-## Deployment Architecture
-
-```
-┌─────────────────────────────────────────┐
-│         Frontend (React + Vite)         │
-│         Port: 5173 (dev)                │
-│         Static files (production)       │
-└──────────────┬──────────────────────────┘
-               │
-               │ HTTP/WebSocket
-               │
-┌──────────────▼──────────────────────────┐
-│      Backend (FastAPI + Uvicorn)        │
-│      Port: 8000                          │
-│      WebSocket: /ws/search               │
-└──────────────┬──────────────────────────┘
-               │
-       ┌───────┴───────┐
-       │               │
-┌──────▼──────┐  ┌─────▼──────┐
-│  OpenAI API │  │  Pinecone  │
-│  - Embeddings│  │  - Vector  │
-│  - LLM      │  │    Database │
-└─────────────┘  └─────────────┘
-```
 
 ## Performance Considerations
 
