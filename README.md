@@ -49,7 +49,7 @@ For detailed architecture diagrams and system design, see [ARCHITECTURE.md](./AR
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone <https://github.com/Shivakumar980/DogsSearchAI>
 cd dog-breed-search
 ```
 
@@ -268,60 +268,6 @@ source ../venv/bin/activate
 python search_cli.py
 ```
 
-## 🌐 API Endpoints
-
-### WebSocket Endpoint
-
-**URL**: `ws://localhost:8000/ws/search`
-
-**Message Format**:
-```json
-{
-  "type": "search",
-  "query": "small apartment dog",
-  "top_k": 24,
-  "rerank_top_n": 72
-}
-```
-
-**Response Format**:
-```json
-{
-  "type": "results",
-  "data": {
-    "results": [
-      {
-        "name": "Breed Name",
-        "match_category": {
-          "category": "excellent",
-          "label": "Excellent Match",
-          "color": "#4ADE80",
-          "description": "Highly relevant to your search",
-          "icon": "⭐"
-        },
-        "score": 0.856,
-        "size": "small",
-        "weight": "10-15 lbs",
-        ...
-      }
-    ],
-    "metadata": {...}
-  }
-}
-```
-
-### Health Check
-
-**GET** `http://localhost:8000/health`
-
-Returns:
-```json
-{
-  "status": "healthy",
-  "engine_ready": true
-}
-```
-
 ## 📝 Environment Variables
 
 Required environment variables in `backend/config/.env`:
@@ -332,19 +278,7 @@ PINECONE_API_KEY=...
 PINECONE_INDEX_NAME=dog-breeds
 ```
 
-
-## 📄 License
-
-[Add your license here]
-
 ## 👥 Contributors
 
 [Shivakumar Machidi]
-
-## 🙏 Acknowledgments
-
-- Dog breed data sources
-- OpenAI for embeddings and LLM
-- Pinecone for vector database
-- Sentence Transformers for cross-encoder models
 
