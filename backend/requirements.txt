@@ -1,0 +1,20 @@
+# Core
+python-dotenv==1.0.0
+requests>=2.32.3
+
+# API Server
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+websockets>=12.0
+
+# Vector database
+pinecone==7.0.2
+
+# Embeddings
+openai>=1.50.0
+
+# Reranking
+sentence-transformers>=2.2.0
+
+# Utilities
+tqdm==4.66.1
