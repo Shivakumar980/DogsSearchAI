@@ -332,28 +332,6 @@ PINECONE_API_KEY=...
 PINECONE_INDEX_NAME=dog-breeds
 ```
 
-## 🐛 Troubleshooting
-
-### Backend won't start
-- Check if port 8000 is already in use: `lsof -ti:8000`
-- Kill existing process: `kill -9 <PID>`
-- Ensure virtual environment is activated
-- Verify all dependencies are installed: `pip install -r requirements.txt`
-
-### Frontend can't connect to backend
-- Verify backend is running on `http://localhost:8000`
-- Check WebSocket connection in browser console
-- Ensure CORS is enabled (already configured in `app.py`)
-
-### No search results
-- Verify Pinecone index is populated: run `python main.py`
-- Check API keys are correct in `.env` file
-- Review server logs in `backend/logs/`
-
-### Match categories not showing
-- Ensure backend server was restarted after code changes
-- Check browser console for errors
-- Verify `match_category` is in response data
 
 ## 📄 License
 
