@@ -1,140 +1,67 @@
-# Dog Breed Search - Project Structure
-
-## 📁 Folder Structure
-
+```mermaid
+graph TB
+    %% Styling
+    classDef ingestNode fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#fff
+    classDef searchNode fill:#ef4444,stroke:#b91c1c,stroke-width:2px,color:#fff
+    classDef serviceNode fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff
+    classDef dbNode fill:#8b5cf6,stroke:#6d28d9,stroke-width:3px,color:#fff
+    classDef userNode fill:#f59e0b,stroke:#d97706,stroke-width:3px,color:#fff
+    
+    %% --- INGESTION PIPELINE ---
+    subgraph INGEST["DATA INGESTION PIPELINE"]
+        direction LR
+        A1[Clean Data]:::ingestNode
+        A2[Map Size Categories]:::ingestNode
+        A3[Generate Text Formats]:::ingestNode
+        A4[Generate Embeddings]:::ingestNode
+        A5[Index to Pinecone]:::ingestNode
+        
+        A1 --> A2 --> A3 --> A4 --> A5
+    end
+    
+    %% --- MIDDLE LAYER ---
+    subgraph SERVICES["OPENAI SERVICES"]
+        direction TB
+        EMB[Embeddings API<br/>text-embedding-3-small]:::serviceNode
+        LLM[LLM API<br/>gpt-4o-mini]:::serviceNode
+    end
+    
+    subgraph DB["VECTOR DATABASE"]
+        direction TB
+        PC[(Pinecone Index<br/>1536-d vectors<br/>+ metadata)]:::dbNode
+    end
+    
+    %% --- USER ---
+    USER[User]:::userNode
+    
+    %% --- SEARCH PIPELINE ---
+    subgraph SRCH["SEARCH PIPELINE"]
+        direction LR
+        S1[LLM Query Parser]:::searchNode
+        S2[Query Enhancer]:::searchNode
+        S3[Vector Search]:::searchNode
+        S4[Cross-Encoder Rerank]:::searchNode
+        S5[Post Filter]:::searchNode
+        S6[Match Categorizer]:::searchNode
+        
+        S1 --> S2 --> S3 --> S4 --> S5 --> S6
+    end
+    
+    %% --- DATA FLOWS ---
+    A4 -.->|batch embeddings| EMB
+    A5 ==>|upsert vectors| PC
+    
+    USER ==>|search query| S1
+    S1 -.->|parse filters| LLM
+    S2 -.->|query embeddings| EMB
+    S3 <===>|retrieve| PC
+    S6 ==>|results| USER
+    
+    %% Vertical flow
+    INGEST ==> DB
+    DB ==> SRCH
+    INGEST -.-> SERVICES
+    SERVICES -.-> SRCH
 ```
-dog-breed-search/
-├── frontend/              # React frontend (create with create-react-app or Vite)
-│   ├── src/
-│   │   ├── components/
-│   │   ├── services/
-│   │   │   └── api.js     # WebSocket & REST API client
-│   │   └── App.jsx
-│   ├── package.json
-│   └── vite.config.js
-│
-├── backend/               # All backend code (Python + API + Config + Data)
-│   ├── app.py             # FastAPI server with WebSocket
-│   ├── complete_search_engine.py
-│   ├── ingestion_pipeline.py
-│   ├── llm_query_parser.py
-│   ├── search_cli.py
-│   ├── main.py            # Ingestion pipeline entry point
-│   ├── requirements.txt   # Python dependencies
-│   ├── routes/            # API route modules (for future expansion)
-│   ├── config/            # Configuration files
-│   │   └── .env           # API keys and secrets
-│   ├── data/              # Data files
-│   │   └── enriched_breeds_*.json
-│   └── logs/              # Log files
-│
-└── venv/                  # Python virtual environment
-```
+  
 
-## 🔄 Architecture Flow
-
-```
-┌─────────────────┐
-│  React Frontend │
-│  (frontend/)    │
-└────────┬────────┘
-         │
-         │ WebSocket / REST API
-         │
-         ▼
-┌─────────────────┐
-│  FastAPI Server │
-│  (backend/app.py)│
-└────────┬────────┘
-         │
-         │ Uses
-         ▼
-┌─────────────────┐
-│  Search Engine  │
-│  (backend/*.py) │
-└────────┬────────┘
-         │
-         │ Connects to
-         ▼
-┌─────────────────┐
-│  Pinecone       │
-│  OpenAI         │
-└─────────────────┘
-```
-
-## 🚀 Quick Start
-
-### 1. Backend API
-```bash
-cd backend
-pip install -r requirements.txt
-python app.py
-# Server runs on http://localhost:8000
-```
-
-### 2. Ingestion Pipeline
-```bash
-cd backend
-python main.py
-```
-
-### 3. Frontend (to be created)
-```bash
-cd frontend
-npm install
-npm run dev
-# Frontend runs on http://localhost:3000
-```
-
-## 📡 API Endpoints
-
-### Health Check (HTTP)
-- `GET /` - Server status
-- `GET /health` - Health check
-
-### WebSocket (Search)
-- `ws://localhost:8000/ws/search` - Real-time search with progress updates
-
-## 🔌 WebSocket Message Format
-
-### Client → Server
-```json
-{
-    "type": "search",
-    "query": "small friendly dog",
-    "top_k": 10,
-    "rerank_top_n": 50
-}
-```
-
-### Server → Client
-```json
-// Progress
-{
-    "type": "progress",
-    "stage": "query_parsing",
-    "message": "Understanding your query..."
-}
-
-// Results
-{
-    "type": "results",
-    "data": {
-        "results": [...],
-        "metadata": {...}
-    }
-}
-
-// Error
-{
-    "type": "error",
-    "message": "Error description"
-}
-```
-
-## 📝 File Paths
-
-All paths are relative to the `backend/` directory:
-- Config: `config/.env`
-- Data: `data/enriched_breeds_*.json`
-- Logs: `logs/`
