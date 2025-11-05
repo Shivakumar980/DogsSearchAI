@@ -19,6 +19,21 @@ graph TB
         WS_ENDPOINT --> SEARCH_ENGINE
     end
 
+    subgraph "Ingestion Pipeline"
+        FETCH[Fetch Data<br/>Dogs API]
+        CLEAN[Clean Data]
+        MAP_SIZE[Map Size Categories]
+        GEN_TEXT[Generate Text Formats]
+        GEN_EMBED[Generate Embeddings]
+        INDEX[Index to Pinecone]
+        
+        FETCH --> CLEAN
+        CLEAN --> MAP_SIZE
+        MAP_SIZE --> GEN_TEXT
+        GEN_TEXT --> GEN_EMBED
+        GEN_EMBED --> INDEX
+    end
+
     subgraph "Search Pipeline"
         LLM_PARSER[LLM Query Parser<br/>GPT-4o-mini]
         QUERY_ENHANCER[Query Enhancer]
@@ -36,6 +51,7 @@ graph TB
     end
 
     subgraph "External Services"
+        DOGS_API[Dogs API<br/>Breed Data]
         OPENAI[OpenAI API<br/>Embeddings & LLM]
         PINECONE[Pinecone<br/>Vector Database]
     end
@@ -46,18 +62,65 @@ graph TB
     end
 
     WS_CLIENT <-->|WebSocket| WS_ENDPOINT
+    FETCH --> DOGS_API
+    GEN_EMBED --> OPENAI
+    INDEX --> PINECONE
     LLM_PARSER --> OPENAI
     QUERY_ENHANCER --> OPENAI
     VECTOR_SEARCH --> PINECONE
     PINECONE --> INDEX
     CATEGORIZER --> WS_ENDPOINT
     WS_ENDPOINT --> WS_CLIENT
+    INDEX -.->|Reads| JSON_DATA
 
     style UI fill:#5B9BD5
     style SEARCH_ENGINE fill:#991B1B
+    style FETCH fill:#F59E0B
+    style GEN_EMBED fill:#F59E0B
+    style INDEX fill:#F59E0B
     style OPENAI fill:#10A37F
     style PINECONE fill:#663399
-    style INDEX fill:#663399
+```
+
+## Ingestion Pipeline Flow
+
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Pipeline
+    participant DogsAPI
+    participant OpenAI
+    participant Pinecone
+    participant JSON
+
+    Admin->>Pipeline: Run ingestion pipeline
+    
+    Note over Pipeline: Stage 1: Fetch
+    Pipeline->>DogsAPI: GET /breeds
+    DogsAPI-->>Pipeline: Raw breed data
+    
+    Note over Pipeline: Stage 2: Clean
+    Pipeline->>Pipeline: Remove duplicates<br/>Handle missing fields<br/>Normalize data
+    
+    Note over Pipeline: Stage 3: Map Sizes
+    Pipeline->>Pipeline: Map weight to categories<br/>(tiny, small, medium, large, giant)
+    
+    Note over Pipeline: Stage 4: Generate Text
+    Pipeline->>Pipeline: Generate conversational text<br/>Generate structured text
+    
+    Note over Pipeline: Stage 5: Generate Embeddings
+    Pipeline->>OpenAI: text-embedding-3-small<br/>(batch of 100)
+    OpenAI-->>Pipeline: Embeddings (1536-dim)
+    
+    Note over Pipeline: Stage 6: Index to Pinecone
+    Pipeline->>Pinecone: Upsert vectors + metadata
+    Pinecone-->>Pipeline: Indexed successfully
+    
+    Note over Pipeline: Stage 7: Save JSON
+    Pipeline->>JSON: Save enriched data
+    JSON-->>Pipeline: Saved with timestamp
+    
+    Pipeline-->>Admin: ✅ Pipeline complete
 ```
 
 ## Search Pipeline Flow
@@ -165,96 +228,5 @@ flowchart TD
     style DISPLAY fill:#5B9BD5
 ```
 
-## System Components
 
-### Frontend Components
-
-```
-DogsUI (Main Component)
-├── WebSocket Connection Manager
-├── Search Input Handler
-├── Results Display
-│   ├── Card Grid (12 per page)
-│   ├── Match Category Badges
-│   └── Pagination Controls
-└── Carousel (Initial Load)
-```
-
-### Backend Components
-
-```
-CompleteSearchEngine
-├── LLMQueryParser
-│   └── Extracts: size, weight, temperament, activity_level, etc.
-├── Query Enhancer
-│   └── Adds semantic context for embeddings
-├── Vector Search
-│   └── Pinecone query with metadata filters
-├── Cross-Encoder Reranker
-│   └── Scores all candidates (100)
-├── Post-Filter
-│   └── Applies explicit filters
-└── Match Categorizer
-    └── Detects score drops → Excellent/Good/Fair
-```
-
-
-## Search Pipeline Details
-
-### Stage 1: Query Understanding
-- **Input**: Natural language query (e.g., "small apartment dog")
-- **Process**: LLM extracts structured filters
-- **Output**: `{size: "small", apartment_suitable: true, ...}`
-
-### Stage 2: Query Enhancement
-- **Input**: Original query + extracted filters
-- **Process**: Adds semantic context
-- **Output**: Enhanced query string for embedding
-
-### Stage 3: Embedding Generation
-- **Input**: Enhanced query
-- **Process**: OpenAI embedding API
-- **Output**: 1536-dimensional vector
-
-### Stage 4: Vector Search
-- **Input**: Query embedding + metadata filters
-- **Process**: Pinecone similarity search
-- **Output**: Top 100 candidates with scores
-
-### Stage 5: Cross-Encoder Reranking
-- **Input**: 100 candidates + original query
-- **Process**: Cross-encoder scores each candidate
-- **Output**: Reranked results by relevance score
-
-### Stage 6: Post-Filtering
-- **Input**: Reranked results + LLM filters
-- **Process**: Applies explicit filters (e.g., temperament_avoid)
-- **Output**: Filtered results
-
-### Stage 7: Categorization
-- **Input**: Filtered results with scores
-- **Process**: Detects drastic score drops to set boundaries
-- **Output**: Results tagged as Excellent/Good/Fair
-
-### Stage 8: Result Formatting
-- **Input**: Categorized results
-- **Process**: Formats for frontend display
-- **Output**: 24 results with match categories
-
-
-
-## Performance Considerations
-
-- **Vector Search**: Retrieves top 100 candidates for better quality
-- **Cross-Encoder**: Reranks all 100 candidates (not just subset)
-- **Async Processing**: WebSocket with thread pool for non-blocking operations
-- **Pagination**: 24 results split into 2 pages of 12 for better UX
-- **Caching**: Embeddings and reranking results cached in memory
-
-## Security
-
-- **API Keys**: Stored in `.env` file (not committed to git)
-- **CORS**: Configured for frontend domain
-- **Input Validation**: Query sanitization and validation
-- **Error Handling**: Comprehensive error handling with logging
 
