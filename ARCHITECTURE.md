@@ -4,83 +4,70 @@
 
 ```mermaid
 graph TB
-    subgraph "Frontend (React)"
-        UI[DogsUI Component]
-        WS_CLIENT[WebSocket Client]
-        UI --> WS_CLIENT
-    end
-
-    subgraph "Backend (FastAPI)"
-        API[FastAPI Server]
-        WS_ENDPOINT[WebSocket Endpoint<br/>/ws/search]
-        SEARCH_ENGINE[CompleteSearchEngine]
+    %% Styling
+    classDef ingestNode fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#fff
+    classDef searchNode fill:#ef4444,stroke:#b91c1c,stroke-width:2px,color:#fff
+    classDef serviceNode fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff
+    classDef dbNode fill:#8b5cf6,stroke:#6d28d9,stroke-width:3px,color:#fff
+    classDef userNode fill:#f59e0b,stroke:#d97706,stroke-width:3px,color:#fff
+    
+    %% --- INGESTION PIPELINE ---
+    subgraph INGEST["DATA INGESTION PIPELINE"]
+        direction LR
+        A1[Clean Data]:::ingestNode
+        A2[Map Size Categories]:::ingestNode
+        A3[Generate Text Formats]:::ingestNode
+        A4[Generate Embeddings]:::ingestNode
+        A5[Index to Pinecone]:::ingestNode
         
-        API --> WS_ENDPOINT
-        WS_ENDPOINT --> SEARCH_ENGINE
+        A1 --> A2 --> A3 --> A4 --> A5
     end
-
-    subgraph "Ingestion Pipeline"
-        FETCH[Fetch Data<br/>Dogs API]
-        CLEAN[Clean Data]
-        MAP_SIZE[Map Size Categories]
-        GEN_TEXT[Generate Text Formats]
-        GEN_EMBED[Generate Embeddings]
-        INDEX[Index to Pinecone]
+    
+    %% --- MIDDLE LAYER ---
+    subgraph SERVICES["OPENAI SERVICES"]
+        direction TB
+        EMB[Embeddings API<br/>text-embedding-3-small]:::serviceNode
+        LLM[LLM API<br/>gpt-4o-mini]:::serviceNode
+    end
+    
+    subgraph DB["VECTOR DATABASE"]
+        direction TB
+        PC[(Pinecone Index<br/>1536-d vectors<br/>+ metadata)]:::dbNode
+    end
+    
+    %% --- USER ---
+    USER[User]:::userNode
+    
+    %% --- SEARCH PIPELINE ---
+    subgraph SRCH["SEARCH PIPELINE"]
+        direction LR
+        S1[LLM Query Parser]:::searchNode
+        S2[Query Enhancer]:::searchNode
+        S3[Vector Search]:::searchNode
+        S4[Cross-Encoder Rerank]:::searchNode
+        S5[Post Filter]:::searchNode
+        S6[Match Categorizer]:::searchNode
         
-        FETCH --> CLEAN
-        CLEAN --> MAP_SIZE
-        MAP_SIZE --> GEN_TEXT
-        GEN_TEXT --> GEN_EMBED
-        GEN_EMBED --> INDEX
+        S1 --> S2 --> S3 --> S4 --> S5 --> S6
     end
-
-    subgraph "Search Pipeline"
-        LLM_PARSER[LLM Query Parser<br/>GPT-4o-mini]
-        QUERY_ENHANCER[Query Enhancer]
-        VECTOR_SEARCH[Vector Search]
-        CROSS_ENCODER[Cross-Encoder Reranker<br/>MS-MARCO]
-        POST_FILTER[Post-Filter]
-        CATEGORIZER[Match Categorizer]
-        
-        SEARCH_ENGINE --> LLM_PARSER
-        LLM_PARSER --> QUERY_ENHANCER
-        QUERY_ENHANCER --> VECTOR_SEARCH
-        VECTOR_SEARCH --> CROSS_ENCODER
-        CROSS_ENCODER --> POST_FILTER
-        POST_FILTER --> CATEGORIZER
-    end
-
-    subgraph "External Services"
-        DOGS_API[Dogs API<br/>Breed Data]
-        OPENAI[OpenAI API<br/>Embeddings & LLM]
-        PINECONE[Pinecone<br/>Vector Database]
-    end
-
-    subgraph "Data Storage"
-        INDEX[Pinecone Index<br/>Dog Breed Embeddings]
-        JSON_DATA[Enriched Breed Data<br/>JSON Files]
-    end
-
-    WS_CLIENT <-->|WebSocket| WS_ENDPOINT
-    FETCH --> DOGS_API
-    GEN_EMBED --> OPENAI
-    INDEX --> PINECONE
-    LLM_PARSER --> OPENAI
-    QUERY_ENHANCER --> OPENAI
-    VECTOR_SEARCH --> PINECONE
-    PINECONE --> INDEX
-    CATEGORIZER --> WS_ENDPOINT
-    WS_ENDPOINT --> WS_CLIENT
-    INDEX -.->|Reads| JSON_DATA
-
-    style UI fill:#5B9BD5
-    style SEARCH_ENGINE fill:#991B1B
-    style FETCH fill:#F59E0B
-    style GEN_EMBED fill:#F59E0B
-    style INDEX fill:#F59E0B
-    style OPENAI fill:#10A37F
-    style PINECONE fill:#663399
+    
+    %% --- DATA FLOWS ---
+    A4 -.->|batch embeddings| EMB
+    A5 ==>|upsert vectors| PC
+    
+    USER ==>|search query| S1
+    S1 -.->|parse filters| LLM
+    S2 -.->|query embeddings| EMB
+    S3 <===>|retrieve| PC
+    S6 ==>|results| USER
+    
+    %% Vertical flow
+    INGEST ==> DB
+    DB ==> SRCH
+    INGEST -.-> SERVICES
+    SERVICES -.-> SRCH
 ```
+
 
 ## Ingestion Pipeline Flow
 
