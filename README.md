@@ -2,6 +2,13 @@
 
 An intelligent AI-powered dog breed search application that helps users find their perfect canine companion using natural language queries, semantic search, and cross-encoder reranking.
 
+# Search bar and Results
+
+<img width="1432" height="852" alt="image" src="https://github.com/user-attachments/assets/6b2abf30-97f6-41b4-a8ac-68a7b04cec75" />
+
+<img width="1440" height="855" alt="image" src="https://github.com/user-attachments/assets/e0ad4dfe-1556-4c67-9534-41b48f35abef" />
+
+
 ## ✨ Features
 
 - **Natural Language Search**: Describe what you're looking for in plain English
