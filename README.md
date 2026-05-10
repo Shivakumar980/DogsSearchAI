@@ -1,6 +1,6 @@
 # 🐕 Dog Breed Finder
 
-An intelligent AI-powered dog breed search application that helps users find their perfect canine companion using natural language queries, semantic search, and cross-encoder reranking.
+An intelligent AI-powered dog breed search application that helps users find their perfect canine companion using natural language queries, semantic search, and cross--encoder reranking.
 
 # Search bar and Results
 
