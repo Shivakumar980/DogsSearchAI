@@ -1,6 +1,6 @@
 # Dog Breed Search API
 
-FastAPI server with WebSocket-only API for dog breed search with real-time progress updates.
+FastAPI server with WebSocket-only API for dog breed search with real-time progress updates .
 
 ## Setup
 
